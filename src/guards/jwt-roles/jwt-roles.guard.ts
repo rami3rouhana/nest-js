@@ -1,5 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
-import { CanActivate } from '@nestjs/common';
+import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
@@ -27,7 +26,7 @@ export class JwtRolesGuard implements CanActivate {
 
     // Extract and validate JWT
     const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new AuthorizationError('Invalid authorization header');
     }
     const jwtToken = authHeader.split(' ')[1];

@@ -6,7 +6,7 @@ export const handleGlobalErrors = () => {
   process.on('uncaughtException', errorHandler);
 };
 
-const errorHandler = (error: Error | any) => {
+const errorHandler = (error: Error) => {
   console.error('Error occurred:', error);
   if (process.env.NODE_ENV === 'development') {
     restartApplication();

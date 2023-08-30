@@ -11,7 +11,7 @@ import { CustomLoggerService } from 'src/services/custom-logger.service';
 @Injectable()
 export class MonitoringInterceptor implements NestInterceptor {
   constructor(private readonly customLogger: CustomLoggerService) {}
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const now = Date.now();
 
     return next.handle().pipe(

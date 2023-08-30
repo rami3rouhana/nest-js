@@ -58,19 +58,19 @@ export class CustomLoggerService extends ConsoleLogger {
     this.currentWriteStream.write(logEntry);
   }
 
-  log(message: any, context?: string) {
+  log(message: string, context?: string) {
     const formattedMessage = this.filterSensitiveData(message);
     super.log(formattedMessage, context);
     this.logToFile('info', formattedMessage);
   }
 
-  error(message: any, trace?: string, context?: string) {
+  error(message: string, trace?: string, context?: string) {
     const formattedMessage = this.filterSensitiveData(message);
     super.error(formattedMessage, trace, context);
     this.logToFile('error', formattedMessage, trace);
   }
 
-  warn(message: any, context?: string) {
+  warn(message: string, context?: string) {
     const formattedMessage = this.filterSensitiveData(message);
     super.warn(formattedMessage, context);
     this.logToFile('warn', formattedMessage);
