@@ -21,7 +21,7 @@ describe('HelmetMiddleware', () => {
     const mockRes = { setHeader: jest.fn(), removeHeader: jest.fn() };
     const mockNext = jest.fn();
 
-    middleware.use(mockReq, mockRes, mockNext);
+    middleware.use(mockReq as any, mockRes as any, mockNext);
 
     expect(mockNext).toHaveBeenCalled();
     expect(mockRes.setHeader).toHaveBeenCalledWith(

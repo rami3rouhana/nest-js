@@ -10,7 +10,7 @@ import { CustomLoggerService } from 'src/services/custom-logger.service';
 @Injectable()
 export class SwaggerInterceptor implements NestInterceptor {
   constructor(private readonly customLogger: CustomLoggerService) {}
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const controller = context.getClass();
     const method = context.getHandler();
 

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction } from 'express';
 import { CompressionMiddleware } from './compression.middleware';
 
 describe('CompressionMiddleware', () => {
@@ -22,6 +22,6 @@ describe('CompressionMiddleware', () => {
     const mockRes = {};
     const mockNext: NextFunction = jest.fn();
 
-    middleware.use(mockReq as Request, mockRes as Response, mockNext);
+    middleware.use(mockReq as any, mockRes as any, mockNext);
   });
 });

@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { SwaggerInterceptor } from './swagger.interceptor';
 import { CustomLoggerService } from 'src/services/custom-logger.service';
-import { of } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { of, firstValueFrom } from 'rxjs';
 
 jest.mock('src/services/custom-logger.service');
 

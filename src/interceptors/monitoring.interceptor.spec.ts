@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MonitoringInterceptor } from './monitoring.interceptor';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
-import { of } from 'rxjs';
+import { of, lastValueFrom } from 'rxjs';
 import { CustomLoggerService } from 'src/services/custom-logger.service';
 
 class MockCustomLoggerService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  log(message: string, context: string) {}
+  log(message: string, context: string) {
+    console.log(message, context);
+  }
 }
 
 describe('MonitoringInterceptor', () => {
@@ -50,9 +51,11 @@ describe('MonitoringInterceptor', () => {
       .mockReturnValue(of({}));
     jest.spyOn(customLogger, 'log');
 
-    await interceptor
-      .intercept(mockExecutionContext, mockCallHandler)
-      .toPromise();
+    const observable$ = interceptor.intercept(
+      mockExecutionContext,
+      mockCallHandler,
+    );
+    await lastValueFrom(observable$);
 
     expect(nextHandleSpy).toHaveBeenCalled();
     expect(customLogger.log).toHaveBeenCalledWith(

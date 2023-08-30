@@ -8,7 +8,6 @@ describe('UserController', () => {
   let userController: UserController;
   let userService: jest.Mocked<UserService>;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let jwtService: JwtService;
 
   beforeEach(async () => {
     const mockUserService = {
@@ -32,7 +31,6 @@ describe('UserController', () => {
 
     userController = module.get<UserController>(UserController);
     userService = module.get(UserService);
-    jwtService = module.get<JwtService>(JwtService);
   });
 
   it('should be defined', () => {
@@ -44,7 +42,7 @@ describe('UserController', () => {
       const result = { status: 'Success' };
       userService.getUserInfo.mockReturnValue(result);
 
-      expect(await userController.getAdminUser()).toBe(result);
+      expect(userController.getAdminUser()).toBe(result);
     });
   });
 });
