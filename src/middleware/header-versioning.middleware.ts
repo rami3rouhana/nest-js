@@ -17,7 +17,7 @@ export class HeaderVersioningMiddleware implements NestMiddleware {
     }
 
     // Attach the version information to the request object
-    (req as Request).apiVersion = apiVersion;
+    req.apiVersion = apiVersion;
 
     next();
   }
