@@ -25,38 +25,13 @@ import {
   LoginResponseDto,
   ValidationErrorDto,
 } from './dto/login-response.dto';
+import { RefreshTokenRequiredError } from 'src/errors/RefreshTokenRequiredError';
 
 @ApiTags('Authentication')
 @Controller('auth')
 @ApiCookieAuth()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  // public for testing
-  public validateAndRefreshCsrfToken(req: Request, res: Response): boolean {
-    const csrfTokenHeader = req.headers['x-csrf-token'];
-    const csrfTokenCookie = req.cookies['csrf_token_httponly'];
-
-    if (
-      csrfTokenHeader &&
-      csrfTokenCookie &&
-      csrfTokenHeader === csrfTokenCookie
-    ) {
-      const newCsrfToken = req.csrfToken();
-
-      res.cookie('csrf_token_httponly', newCsrfToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
-
-      res.setHeader('x-csrf-token', newCsrfToken);
-
-      return true;
-    } else {
-      throw new CSRFTokenError();
-    }
-  }
 
   @Post('register')
   @ApiOperation({
@@ -82,8 +57,6 @@ export class AuthController {
     type: CSRFTokenErrorDto,
   })
   async register(@Req() req: Request, @Res() res: Response) {
-    this.validateAndRefreshCsrfToken(req, res);
-
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -137,8 +110,6 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.validateAndRefreshCsrfToken(req, res);
-
     const { username, password } = createUserDto;
 
     const user = await this.authService.validateUser(username, password);
@@ -148,26 +119,45 @@ export class AuthController {
 
     const jwt = await this.authService.login(user);
 
+    res.cookie('refresh-token', jwt.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    });
+
     return res.status(HttpStatus.OK).json({
       message: 'Login successful',
-      jwt,
+      accessToken: jwt.accessToken,
     });
   }
 
+  // for testing purposes
   @Get('token')
   @ApiOperation({ summary: 'Get CSRF token' })
   @ApiResponse({ status: 200, description: 'CSRF token generated' })
   getToken(@Req() req: Request, @Res() res: Response) {
-    const csrfToken = req.csrfToken();
+    return res.send({ status: 'success' });
+  }
 
-    res.cookie('csrf_token_httponly', csrfToken, {
+  @Post('refresh-token')
+  async refreshToken(@Req() req: Request, @Res() res: Response) {
+    const oldRefreshToken = req.cookies['refresh-token'];
+    if (!oldRefreshToken) {
+      throw new RefreshTokenRequiredError();
+    }
+
+    const { accessToken, refreshToken } =
+      await this.authService.refreshToken(oldRefreshToken);
+
+    res.cookie('refresh-token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     });
 
-    res.setHeader('x-csrf-token', csrfToken);
-
-    return res.send({ status: 'success' });
+    return res.status(HttpStatus.OK).json({
+      message: 'Access token refreshed successfully',
+      accessToken: accessToken,
+    });
   }
 }

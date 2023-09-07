@@ -49,12 +49,15 @@ export class AuthService {
 
   async refreshToken(oldRefreshToken: string) {
     try {
-      const payload = this.jwtService.verify(oldRefreshToken);
-      const newAccessToken = this.jwtService.sign(payload, {
-        expiresIn: '15m',
-      });
+      const payload = await this.jwtService.verify(oldRefreshToken);
+      delete payload.iat;
+      delete payload.exp;
+      const accessToken = this.jwtService.sign(payload);
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' }); // 7 days
+
       return {
-        accessToken: newAccessToken,
+        accessToken,
+        refreshToken,
       };
     } catch (e) {
       throw new AuthorizationError();

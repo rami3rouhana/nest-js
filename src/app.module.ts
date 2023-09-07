@@ -9,7 +9,7 @@ import { ConfigurationModule } from './config/config.module';
 import { MonitoringInterceptor } from './interceptors/monitoring.interceptor';
 import { UserModule } from './modules/user/user.module';
 import { ConfigModule } from '@nestjs/config';
-import { CsrfMiddleware } from './middleware/csurf.middleware';
+import { CsrfMiddleware } from './middleware/csrf.middleware';
 import { SwaggerInterceptor } from './interceptors/swagger.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { HeaderVersioningMiddleware } from './middleware/header-versioning.middleware';
@@ -23,10 +23,12 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    ThrottlerModule.forRoot({
-      ttl: 60,
-      limit: 10,
-    }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     ConfigurationModule,
     JwtConfigModule,
     MongoConfigModule,

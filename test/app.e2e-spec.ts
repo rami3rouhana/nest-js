@@ -15,10 +15,10 @@ describe('End-to-end tests', () => {
 
   const csrfExtractor = (response: request.Response) => {
     csrfToken = response.headers['x-csrf-token'];
-    if (!csrfKey)
-      csrfKey = response.header['set-cookie']
-        .map((cookie) => cookie.split(';')[0])[0]
-        .split('=')[1];
+    csrfKey = response.header['set-cookie']
+      .map((cookie) => cookie.split(';')[0])
+      .find((cookie) => cookie.startsWith('x-csrf-token'))
+      .split('=')[1];
   };
 
   beforeAll(async () => {
@@ -34,7 +34,7 @@ describe('End-to-end tests', () => {
 
     client = await MongoClient.connect(mongodbUri);
     db = client.db('test');
-  });
+  }, 10000);
 
   it('should fetch CSRF token', async () => {
     const response = await request(app.getHttpServer())
@@ -45,6 +45,7 @@ describe('End-to-end tests', () => {
     csrfExtractor(response);
 
     expect(csrfToken).toBeDefined();
+    expect(csrfKey).toBeDefined();
   });
 
   it('should register a new user', async () => {
@@ -52,7 +53,8 @@ describe('End-to-end tests', () => {
       .post('/auth/register')
       .set('x-api-version', '1')
       .set('x-csrf-token', csrfToken)
-      .set('Cookie', [`csrf_token_httponly=${csrfToken}`, `_csrf=${csrfKey}`])
+      .set('x-csrf-token', csrfToken)
+      .set('Cookie', [`x-csrf-token=${csrfKey}`])
       .send({ username: 'testuser', password: 'testpassword' })
       .expect(201);
   });
@@ -62,12 +64,13 @@ describe('End-to-end tests', () => {
       .post('/auth/login')
       .set('x-api-version', '1')
       .set('x-csrf-token', csrfToken)
-      .set('Cookie', [`csrf_token_httponly=${csrfToken}`, `_csrf=${csrfKey}`])
+      .set('x-csrf-token', csrfToken)
+      .set('Cookie', [`x-csrf-token=${csrfKey}`])
       .send({ username: 'testuser', password: 'testpassword' })
       .expect(200)
       .expect((res) => {
-        jwtToken = res.body.jwt.accessToken;
-        expect(res.body).toHaveProperty('jwt');
+        jwtToken = res.body.accessToken;
+        expect(res.body).toHaveProperty('accessToken');
       });
   });
 
@@ -76,7 +79,8 @@ describe('End-to-end tests', () => {
       .get('/user')
       .set('x-api-version', '1')
       .set('x-csrf-token', csrfToken)
-      .set('Cookie', [`csrf_token_httponly=${csrfToken}`, `_csrf=${csrfKey}`])
+      .set('x-csrf-token', csrfToken)
+      .set('Cookie', [`x-csrf-token=${csrfKey}`])
       .set('Authorization', `Bearer ${jwtToken}`)
       .expect(200)
       .expect((res) => {
@@ -89,7 +93,8 @@ describe('End-to-end tests', () => {
       .get('/admin')
       .set('x-api-version', '1')
       .set('x-csrf-token', csrfToken)
-      .set('Cookie', [`csrf_token_httponly=${csrfToken}`, `_csrf=${csrfKey}`])
+      .set('x-csrf-token', csrfToken)
+      .set('Cookie', [`x-csrf-token=${csrfKey}`])
       .set('Authorization', `Bearer ${jwtToken}`)
       .expect(403);
   });

@@ -3,6 +3,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { ValidationError } from 'src/errors/ValidationError';
+import { RefreshTokenRequiredError } from 'src/errors/RefreshTokenRequiredError';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -25,10 +26,6 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-
-    jest
-      .spyOn(controller, 'validateAndRefreshCsrfToken')
-      .mockImplementation(() => true);
 
     mockReq = {
       headers: {},
@@ -104,10 +101,7 @@ describe('AuthController', () => {
       });
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'Login successful',
-        jwt: {
-          accessToken: 'jwt_access_token',
-          refreshToken: 'jwt_refresh_token',
-        },
+        accessToken: 'jwt_access_token',
       });
     });
 
@@ -118,6 +112,55 @@ describe('AuthController', () => {
       await expect(() =>
         controller.login(mockReq.body, mockReq as Request, mockRes as Response),
       ).rejects.toThrow(ValidationError);
+    });
+  });
+  describe('refreshToken', () => {
+    it('should throw an error if no refresh token is provided', async () => {
+      const mockReq = {
+        cookies: {},
+      };
+
+      await expect(
+        controller.refreshToken(mockReq as unknown as Request, {} as Response),
+      ).rejects.toThrow(RefreshTokenRequiredError);
+    });
+
+    it('should return a new access token and set a new refresh token cookie', async () => {
+      const mockReq = {
+        cookies: {
+          'refresh-token': 'oldRefreshToken',
+        },
+      };
+
+      const mockRes = {
+        cookie: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+
+      const mockAccessToken = 'newAccessToken';
+      const mockRefreshToken = 'newRefreshToken';
+
+      mockAuthService.refreshToken.mockResolvedValue({
+        accessToken: mockAccessToken,
+        refreshToken: mockRefreshToken,
+      });
+
+      await controller.refreshToken(
+        mockReq as unknown as Request,
+        mockRes as unknown as Response,
+      );
+
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'refresh-token',
+        mockRefreshToken,
+        expect.any(Object),
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Access token refreshed successfully',
+        accessToken: mockAccessToken,
+      });
     });
   });
 });
